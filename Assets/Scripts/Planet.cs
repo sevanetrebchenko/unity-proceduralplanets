@@ -5,6 +5,24 @@ using UnityEngine.SocialPlatforms;
 
 public class Planet : MonoBehaviour
 {
+    // Planet definition.
+    [Range(2, 256)]
+    public int resolution = 10;
+    [SerializeField]
+    bool autoUpdate = true;
+
+    public enum FaceRenderMask { 
+        ALL, 
+        TOP, 
+        BOTTOM, 
+        LEFT, 
+        RIGHT, 
+        FRONT, 
+        BACK 
+    }
+
+    public FaceRenderMask faceRenderMask;
+
     // Planet shape.
     public ShapeSettings shapeSettings;
     [HideInInspector]
@@ -15,18 +33,12 @@ public class Planet : MonoBehaviour
     [HideInInspector]
     public bool showColorSettings;
 
-    // Planet definition.
-    [Range(2,256)]
-    public int resolution = 10;
 
     // Generation.
     ShapeGenerator shapeGenerator;
     [SerializeField, HideInInspector]
     MeshFilter[] meshFilters;
     TerrainFace[] terrainFaces;
-
-    [SerializeField]
-    bool autoUpdate = true;
 
     void Initialize()
     {
@@ -56,6 +68,9 @@ public class Planet : MonoBehaviour
 
             // Initialize terrain face.
             terrainFaces[i] = new TerrainFace(shapeGenerator, meshFilters[i].sharedMesh, resolution, directions[i]);
+
+            bool renderFace = faceRenderMask == FaceRenderMask.ALL || (int)faceRenderMask - 1 == i;
+            meshFilters[i].gameObject.SetActive(renderFace);
         }
     }
 
@@ -89,9 +104,12 @@ public class Planet : MonoBehaviour
 
     void GenerateMesh()
     {
-        foreach (TerrainFace terrainFace in terrainFaces)
+        for (int i = 0; i < 6; ++i)
         {
-            terrainFace.ConstructMesh();
+            if (meshFilters[i].gameObject.activeSelf)
+            {
+                terrainFaces[i].ConstructMesh();
+            }
         }
     }
 
