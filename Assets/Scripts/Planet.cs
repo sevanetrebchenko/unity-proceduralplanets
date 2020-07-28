@@ -5,22 +5,32 @@ using UnityEngine.SocialPlatforms;
 
 public class Planet : MonoBehaviour
 {
+    // Planet shape.
+    public ShapeSettings shapeSettings;
+    [HideInInspector]
+    public bool showShapeSettings;
+
+    // Planet color.
+    public ColorSettings colorSettings;
+    [HideInInspector]
+    public bool showColorSettings;
+
+    // Planet definition.
     [Range(2,256)]
     public int resolution = 10;
 
+    // Generation.
+    ShapeGenerator shapeGenerator;
     [SerializeField, HideInInspector]
     MeshFilter[] meshFilters;
-
     TerrainFace[] terrainFaces;
 
-    private void OnValidate()   
-    {
-        Initialize();
-        GenerateMesh();
-    }
+    [SerializeField]
+    bool autoUpdate = true;
 
     void Initialize()
     {
+        shapeGenerator = new ShapeGenerator(shapeSettings);
         if (meshFilters == null || meshFilters.Length == 0)
         {
             meshFilters = new MeshFilter[6];
@@ -45,7 +55,35 @@ public class Planet : MonoBehaviour
             }
 
             // Initialize terrain face.
-            terrainFaces[i] = new TerrainFace(meshFilters[i].sharedMesh, resolution, directions[i]);
+            terrainFaces[i] = new TerrainFace(shapeGenerator, meshFilters[i].sharedMesh, resolution, directions[i]);
+        }
+    }
+
+    // Re-generate the entire planet from scratch.
+    public void GeneratePlanet()
+    {
+        Initialize();
+        GenerateMesh();
+        GenerateColors();
+    }
+
+    // Only re-generate planet color.
+    public void OnColorSettingsUpdate()
+    {
+        if (autoUpdate)
+        {
+            Initialize();
+            GenerateColors();
+        }
+    }
+
+    // Only regenerate planet size.
+    public void OnShapeSettingsUpdate()
+    {
+        if (autoUpdate)
+        {
+            Initialize();
+            GenerateMesh();
         }
     }
 
@@ -54,6 +92,15 @@ public class Planet : MonoBehaviour
         foreach (TerrainFace terrainFace in terrainFaces)
         {
             terrainFace.ConstructMesh();
+        }
+    }
+
+    void GenerateColors()
+    {
+        foreach (MeshFilter meshFilter in meshFilters)
+        {
+            // Set mesh color to planet color.
+            meshFilter.GetComponent<MeshRenderer>().sharedMaterial.color = colorSettings.planetColor;
         }
     }
 }
